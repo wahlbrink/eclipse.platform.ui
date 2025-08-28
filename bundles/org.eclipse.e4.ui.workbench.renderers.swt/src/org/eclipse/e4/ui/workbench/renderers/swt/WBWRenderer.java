@@ -522,40 +522,6 @@ public class WBWRenderer extends SWTPartRenderer {
 		Widget widget = (Widget) me.getWidget();
 
 		if (widget instanceof final Shell shell && me instanceof final MWindow w) {
-			shell.addControlListener(new ControlListener() {
-				@Override
-				public void controlResized(ControlEvent e) {
-					// Don't store the maximized size in the model
-					if (shell.getMaximized()) {
-						return;
-					}
-
-					try {
-						ignoreSizeChanges = true;
-						w.setWidth(shell.getSize().x);
-						w.setHeight(shell.getSize().y);
-					} finally {
-						ignoreSizeChanges = false;
-					}
-				}
-
-				@Override
-				public void controlMoved(ControlEvent e) {
-					// Don't store the maximized size in the model
-					if (shell.getMaximized()) {
-						return;
-					}
-
-					try {
-						ignoreSizeChanges = true;
-						w.setX(shell.getLocation().x);
-						w.setY(shell.getLocation().y);
-					} finally {
-						ignoreSizeChanges = false;
-					}
-				}
-			});
-
 			shell.addShellListener(ShellListener.shellClosedAdapter(e -> {
 				// override the shell close event
 				e.doit = false;
@@ -723,6 +689,44 @@ public class WBWRenderer extends SWTPartRenderer {
 				shell.setMaximized(true);
 			} else if (shellME.getTags().contains(ShellMinimizedTag)) {
 				shell.setMinimized(true);
+			}
+
+			if (shellME instanceof MWindow w) {
+				shell.addControlListener(new ControlListener() {
+					@Override
+					public void controlResized(ControlEvent e) {
+						// Don't store the maximized size in the model
+						if (shell.getMaximized()) {
+							shellME.getTags().add(ShellMaximizedTag);
+							return;
+						}
+						shellME.getTags().remove(ShellMaximizedTag);
+
+						try {
+							ignoreSizeChanges = true;
+							w.setWidth(shell.getSize().x);
+							w.setHeight(shell.getSize().y);
+						} finally {
+							ignoreSizeChanges = false;
+						}
+					}
+
+					@Override
+					public void controlMoved(ControlEvent e) {
+						// Don't store the maximized size in the model
+						if (shell.getMaximized()) {
+							return;
+						}
+
+						try {
+							ignoreSizeChanges = true;
+							w.setX(shell.getLocation().x);
+							w.setY(shell.getLocation().y);
+						} finally {
+							ignoreSizeChanges = false;
+						}
+					}
+				});
 			}
 
 			forceLayout(shell); // See Bug 375576
